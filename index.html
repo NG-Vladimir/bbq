@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Мини BBQ/Гриль | Telegram MiniApp</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+
+    <div class="tabs" id="tabs">
+      <button class="tab-btn active" data-cat="BBQ">BBQ</button>
+      <button class="tab-btn" data-cat="ГРИЛЬ">Гриль</button>
+      <button class="tab-btn" data-cat="СОУСЫ">Соусы</button>
+    </div>
+
+    <h2 class="app-title" id="cat-title">Меню BBQ</h2>
+
+    <div id="products-section">
+      <div class="products-list" id="products-list">
+        <!-- Товары появятся через JS -->
+      </div>
+      <button id="show-all-btn" class="show-all-btn">Показать всё меню</button>
+    </div>
+
+    <button class="cart-btn" id="cart-btn" disabled>
+      Корзина <span class="cart-count" id="cart-count">(0)</span>
+    </button>
+
+    <div id="cart-modal" class="cart-modal" style="display:none;">
+      <div class="cart-content">
+        <h3>Корзина</h3>
+        <div id="cart-items"></div>
+        <div class="cart-total-row">
+          <span>Сумма заказа:</span>
+          <span id="cart-total-sum">0 руб</span>
+        </div>
+        <button class="confirm-btn" id="confirm-btn">Подтвердить заказ</button>
+        <button class="close-cart-btn" id="close-cart-btn">Закрыть</button>
+      </div>
+    </div>
+
+    <div id="thanks-modal" class="cart-modal" style="display:none;">
+      <div class="cart-content">
+        <h3>Спасибо!</h3>
+        <p>Ваш заказ успешно отправлен 👌</p>
+        <button class="close-cart-btn" onclick="window.location.reload()">Закрыть MiniApp</button>
+      </div>
+    </div>
+
+  </div>
+  <script>
+    // ===============================
+    // ДАННЫЕ МЕНЮ
+    // ===============================
+    const MENU = [
+      {
+        category: 'BBQ',
+        items: [
+          { name: 'Говядина (рваное мясо)', price: 8.5, unit: '100г' },
+          { name: 'Говяжий язык', price: 9.5, unit: '100г' },
+          { name: 'Буженина (шея)', price: 7.5, unit: '100г' },
+          { name: 'Свинина (рваное мясо)', price: 6.5, unit: '100г' },
+          { name: 'Рёбрышки (толстые)', price: 8, unit: '100г' },
+          { name: 'Рёбрышки (мясные)', price: 5, unit: '100г' },
+          { name: 'Рулька (свинина)', price: 5, unit: '100г' },
+          { name: 'Куриное (мясо)', price: 5.5, unit: '100г' },
+          { name: 'Индейка (бедро)', price: 7, unit: '100г' },
+          { name: 'Индейка (голень)', price: 6, unit: '100г' },
+          { name: 'Мясо индейки', price: 9, unit: '100г' },
+          { name: 'Утка с запеч. ябл.', price: 7, unit: '100г' },
+        ]
+      },
+      {
+        category: 'ГРИЛЬ',
+        items: [
+          { name: 'Авторский шашлык (шея)', price: 7, unit: '100г' },
+          { name: 'Рёбрышки (свиные)', price: 7, unit: '100г' },
+          { name: 'Куриные (чупа-чупсы) в ф. соусе', price: 6, unit: '100г' },
+          { name: 'Куриные крылышки', price: 6, unit: '100г' },
+          { name: 'Куриные сердечки', price: 6, unit: '100г' },
+          { name: 'Домашние колбаски', price: 7, unit: '100г' },
+        ]
+      },
+      {
+        category: 'СОУСЫ',
+        items: [
+          { name: 'Барбекю', price: 4, unit: '50г' },
+          { name: 'Фирменный сырный', price: 4, unit: '50г' },
+          { name: 'Чили сладкий', price: 4, unit: '50г' },
+        ]
+      }
+    ];
+
+    const SHORT_LIMIT = 3;
+    let cart = {};
+    let currentCat = 'BBQ';
+    let allMenuShown = false;
+
+    function renderTabs() {
+      const tabBtns = document.querySelectorAll('.tab-btn');
+      tabBtns.forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.cat === currentCat);
+      });
+    }
+
+    function renderProducts() {
+      const sectionTitle = document.getElementById('cat-title');
+      sectionTitle.textContent = `Меню ${currentCat.charAt(0).toUpperCase() + currentCat.slice(1).toLowerCase()}`;
+
+      const list = document.getElementById('products-list');
+      list.innerHTML = '';
+      const cat = MENU.find(cat => cat.category === currentCat);
+      if (!cat) return;
+
+      const showItems = allMenuShown ? cat.items : cat.items.slice(0, SHORT_LIMIT);
+      showItems.forEach((item) => {
+        const card = document.createElement('div');
+        card.className = 'product-card';
+        card.innerHTML = `
+          <div class="product-info">
+            <div class="product-name">${item.name}</div>
+            <div class="product-meta">${item.price} руб/${item.unit}</div>
+          </div>
+          <div class="product-amount">
+            <button class="btn minus" ${!cartKeyHas(item) ? 'disabled' : ''}>-</button>
+            <span class="amount">${cart[itemKey(item)] || 0}</span>
+            <button class="btn plus">+</button>
+          </div>
+        `;
+        const minus = card.querySelector('.minus');
+        const plus = card.querySelector('.plus');
+        plus.onclick = () => {
+          cart[itemKey(item)] = (cart[itemKey(item)] || 0) + 1;
+          renderProducts();
+          updateCartBtn();
+        };
+        minus.onclick = () => {
+          if (cart[itemKey(item)]) {
+            cart[itemKey(item)] -= 1;
+            if (cart[itemKey(item)] <= 0) delete cart[itemKey(item)];
+            renderProducts();
+            updateCartBtn();
+          }
+        };
+        list.appendChild(card);
+      });
+
+      const btnShowAll = document.getElementById('show-all-btn');
+      if (cat.items.length > SHORT_LIMIT && !allMenuShown) {
+        btnShowAll.style.display = 'block';
+      } else {
+        btnShowAll.style.display = 'none';
+      }
+    }
+    function cartKeyHas(item) {
+      return cart[itemKey(item)] && cart[itemKey(item)] > 0;
+    }
+    function itemKey(item) {
+      return `${item.name}|${item.price}|${item.unit}`;
+    }
+    function findItemByKey(key) {
+      for (const cat of MENU)
+        for (const it of cat.items)
+          if (itemKey(it) === key)
+            return it;
+      return null;
+    }
+    document.getElementById('show-all-btn').onclick = function(){
+      allMenuShown = true;
+      renderProducts();
+      renderTabs();
+    };
+
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.onclick = () => {
+        currentCat = btn.dataset.cat;
+        allMenuShown = false;
+        renderTabs();
+        renderProducts();
+        const productsList = document.getElementById('products-list');
+        productsList.classList.add('fade');
+        setTimeout(() => productsList.classList.remove('fade'), 350);
+      };
+    });
+
+    function updateCartBtn() {
+      let total = Object.values(cart).reduce((s, n) => s + n, 0);
+      document.getElementById('cart-count').textContent = `(${total})`;
+      document.getElementById('cart-btn').disabled = total === 0;
+    }
+
+    document.getElementById('cart-btn').onclick = function(){
+      openCart();
+    };
+    function openCart(){
+      const modal = document.getElementById('cart-modal');
+      const cartItems = document.getElementById('cart-items');
+      const cartTotalSum = document.getElementById('cart-total-sum');
+      cartItems.innerHTML = '';
+      let sum = 0;
+      Object.entries(cart).forEach(([key, amount])=>{
+        const item = findItemByKey(key);
+        let total = item.price * amount;
+        sum += total;
+        const row = document.createElement('div');
+        row.className = 'cart-row';
+        row.innerHTML = `
+          <span class="cart-item-title">${item.name}</span>
+          <span class="cart-item-meta">${item.price} руб/${item.unit}</span>
+          <div class="cart-edit">
+            <button class="btn minus">-</button>
+            <span class="amount">${amount}</span>
+            <button class="btn plus">+</button>
+            <button class="btn remove" title="Удалить">&#10005;</button>
+          </div>
+          <span class="cart-item-sum">${(total).toFixed(2)} руб</span>
+        `;
+        row.querySelector('.plus').onclick = ()=>{
+          cart[key] = (cart[key] || 0) + 1;
+          openCart();
+          renderProducts();
+          updateCartBtn();
+        };
+        row.querySelector('.minus').onclick = ()=>{
+          cart[key] = cart[key] - 1;
+          if (cart[key]<=0) delete cart[key];
+          openCart();
+          renderProducts();
+          updateCartBtn();
+        };
+        row.querySelector('.remove').onclick = ()=>{
+          delete cart[key];
+          openCart();
+          renderProducts();
+          updateCartBtn();
+        };
+        cartItems.appendChild(row);
+      });
+      cartTotalSum.textContent = `${sum.toFixed(2)} руб`;
+      modal.style.display = 'flex';
+    }
+    document.getElementById('close-cart-btn').onclick = ()=>{
+      document.getElementById('cart-modal').style.display = 'none';
+    };
+    document.getElementById('confirm-btn').onclick = ()=>{
+      document.getElementById('cart-modal').style.display = 'none';
+      document.getElementById('thanks-modal').style.display = 'flex';
+      cart = {};
+      renderProducts();
+      updateCartBtn();
+    };
+
+    window.onload = () => {
+      renderTabs();
+      renderProducts();
+      updateCartBtn();
+    }
+    window.onresize = renderTabs;
+  </script>
+</body>
+</html>

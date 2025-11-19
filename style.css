@@ -1,0 +1,328 @@
+body {
+  min-height: 100vh;
+  background: #f5f6fa;
+  margin: 0;
+  font-family: 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.container {
+  width: 100%;
+  max-width: 430px;
+  margin: 32px auto;
+  background: #fcfcfc;
+  border-radius: 24px;
+  box-shadow: 0 4px 32px 0 rgba(0,0,0,0.08);
+  padding: 24px 16px 22px 16px;
+}
+
+/* --- ТАБЫ --- */
+.tabs {
+  display: flex;
+  position: relative;
+  justify-content: space-between;
+  background: #f5f6fa;
+  border-radius: 18px;
+  margin-bottom: 12px;
+  box-shadow: 0 1px 4px 0 rgba(43,56,90,0.05);
+  height: 45px;
+  padding: 0;
+  gap: 7px;
+}
+.tab-btn {
+  background: #e7eafd;
+  border: none;
+  font-size: 16px;
+  font-weight: 400;
+  color: #416ad3;
+  padding: 0 12px;
+  cursor: pointer;
+  flex: 1 1 33%;
+  height: 40px;
+  border-radius: 16px;
+  margin: 2.5px 0;
+  transition: background 0.22s, color 0.21s, font-weight 0.22s, box-shadow 0.19s;
+  z-index: 2;
+  outline: none;
+  position: relative;
+  box-shadow: none;
+}
+.tab-btn.active {
+  background: linear-gradient(95deg, #255af2 80%, #408cff 100%);
+  color: #fff;
+  font-weight: 600;
+  box-shadow: 0 3px 14px 0 #255af232;
+}
+.tab-btn:active:not(.active),
+.tab-btn:hover:not(.active) {
+  background: #d3e2fe;
+  color: #255af2;
+}
+
+/* Удалена полоска .tab-indicator */
+
+.app-title {
+  margin-top: 8px;
+  text-align: center;
+  font-size: 23px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: #212428;
+  margin-bottom: 15px;
+}
+
+/* --- ТОВАРЫ --- */
+.products-list {
+  margin-bottom: 32px;
+  min-height: 120px;
+  transition: opacity 0.38s;
+  will-change: opacity;
+}
+.products-list.fade {
+  opacity: 0.08;
+}
+.product-card {
+  background: #fff;
+  border-radius: 17px;
+  box-shadow: 0 1px 8px 0 rgba(30,34,60,0.08);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px 12px 14px;
+  margin-bottom: 8px;
+  transition: background 0.18s;
+}
+.product-info {
+  flex: 1;
+}
+.product-name {
+  font-size: 16px;
+  font-weight: 400;
+  color: #23262F;
+  margin-bottom: 2px;
+}
+.product-meta {
+  font-size: 13px;
+  color: #a7a7a7;
+  font-weight: 300;
+}
+.product-amount {
+  display: flex;
+  align-items: center;
+}
+.btn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  outline: none;
+  background: #f5f7fb;
+  color: #23262F;
+  border-radius: 50%;
+  font-size: 19px;
+  font-weight: 400;
+  cursor: pointer;
+  box-shadow: 0 1px 2px 0 rgba(30,34,60,0.08);
+  transition: background 0.15s;
+}
+.btn:active {
+  background: #e3e8fc;
+}
+.btn:disabled {
+  opacity: 0.38;
+  cursor: default;
+}
+.amount {
+  display: inline-block;
+  width: 28px;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 400;
+  color: #383838;
+}
+.show-all-btn {
+  width: 100%;
+  margin-top: 7px;
+  margin-bottom: 14px;
+  background: #f8faff;
+  border-radius: 16px;
+  border: none;
+  font-size: 15px;
+  padding: 12px;
+  color: #255af2;
+  font-weight: 400;
+  cursor: pointer;
+  box-shadow: 0 1px 3px 0 rgba(36,96,210,0.04);
+  transition: background 0.14s;
+}
+.show-all-btn:active {
+  background: #e9f0ff;
+}
+/* --- КОРЗИНА --- */
+.cart-btn {
+  width: 100%;
+  padding: 15px 0;
+  border: none;
+  border-radius: 17px;
+  background: #f5f7fb;
+  color: #23262F;
+  font-size: 18px;
+  font-weight: 400;
+  box-shadow: 0 1px 8px 0 rgba(30,34,60,0.09);
+  cursor: pointer;
+  margin-top: 8px;
+  transition: background 0.16s;
+}
+.cart-btn:active {
+  background: #ececec;
+}
+.cart-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.cart-count {
+  font-weight: 300;
+  color: #757575;
+  font-size: 16px;
+  margin-left: 4px;
+}
+
+/* --- МОДАЛЬНОЕ ОКНО КОРЗИНЫ --- */
+.cart-modal {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  position: fixed;
+  z-index: 10;
+  left: 0; right: 0; top: 0; bottom: 0;
+  background: rgba(220,220,230,0.20);
+  animation: fadeIn 0.24s;
+}
+@keyframes fadeIn {
+  from { opacity: 0; } to { opacity: 1; }
+}
+.cart-content {
+  background: #fff;
+  padding: 25px 19px 15px 19px;
+  border-radius: 22px;
+  box-shadow: 0 4px 24px 0 rgba(30,34,60,0.10);
+  min-width: 315px;
+  min-height: 180px;
+  max-width: 94vw;
+}
+.cart-content h3 {
+  margin-top: 0;
+  font-weight: 500;
+  font-size: 20px;
+  color: #202226;
+}
+.cart-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 0 9px 0;
+  border-bottom: 1px solid #f3f3f3;
+  gap: 5px;
+}
+.cart-row:last-child {
+  border-bottom: none;
+}
+.cart-item-title {
+  font-size: 15px;
+  font-weight: 350;
+  color: #1d1c22;
+  flex: 2;
+  min-width: 74px;
+}
+.cart-item-meta {
+  font-size: 13px;
+  font-weight: 300;
+  color: #a7a7a7;
+  flex: 1;
+  text-align: center;
+  min-width: 70px;
+}
+.cart-edit {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: 1;
+  min-width: 74px;
+}
+.cart-edit .btn {
+  width: 25px;
+  height: 25px;
+  font-size: 17px;
+  margin: 0 1px;
+}
+.cart-edit .amount {
+  width: 22px;
+  font-size: 15px;
+}
+.cart-edit .remove {
+  background: #f5f5f5;
+  color: #980909;
+}
+.cart-item-sum {
+  font-size: 15px;
+  color: #364246;
+  font-weight: 400;
+  flex: 1;
+  min-width: 60px;
+  text-align: right;
+}
+.cart-total-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+  margin-bottom: 12px;
+  font-size: 17px;
+  color: #202224;
+  font-weight: 400;
+}
+.confirm-btn {
+  width: 100%;
+  padding: 13px 0;
+  margin-top: 6px;
+  border: none;
+  border-radius: 15px;
+  background: #ececf4;
+  color: #23262F;
+  font-size: 17px;
+  font-weight: 400;
+  cursor: pointer;
+  box-shadow: 0 1px 4px 0 rgba(30,34,60,0.07);
+  margin-bottom: 8px;
+  transition: background 0.13s;
+}
+.confirm-btn:active {
+  background: #e0e0e8;
+}
+.close-cart-btn {
+  width: 100%;
+  background: none;
+  border: none;
+  color: #8086ae;
+  font-size: 16px;
+  font-weight: 350;
+  cursor: pointer;
+  margin-top: 2px;
+}
+
+@media (max-width: 580px) {
+  .container {
+    max-width: 100vw;
+    padding: 8vw 2vw 8vw 2vw;
+    border-radius: 0;
+  }
+  .cart-content {
+    min-width: unset;
+    max-width: 97vw;
+    padding: 17px 3vw 17px 3vw;
+  }
+  .tabs {
+    height: 39px;
+  }
+  .tab-btn { font-size: 14.5px; height: 39px;}
+}
