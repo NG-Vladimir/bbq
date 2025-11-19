@@ -4,9 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Мини BBQ/Гриль | Telegram MiniApp</title>
+
+  <!-- ВАЖНО: подключение Telegram Web App API -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
   <div class="container">
 
     <div class="tabs" id="tabs">
@@ -18,9 +23,7 @@
     <h2 class="app-title" id="cat-title">Меню BBQ</h2>
 
     <div id="products-section">
-      <div class="products-list" id="products-list">
-        <!-- Товары появятся через JS -->
-      </div>
+      <div class="products-list" id="products-list"></div>
       <button id="show-all-btn" class="show-all-btn">Показать всё меню</button>
     </div>
 
@@ -45,12 +48,16 @@
       <div class="cart-content">
         <h3>Спасибо!</h3>
         <p>Ваш заказ успешно отправлен 👌</p>
-        <button class="close-cart-btn" onclick="window.location.reload()">Закрыть MiniApp</button>
+        <button class="close-cart-btn" onclick="window.Telegram.WebApp.close()">Закрыть MiniApp</button>
       </div>
     </div>
 
   </div>
+
   <script>
+    const tg = window.Telegram.WebApp;
+    tg.ready(); // Mini App готова
+
     // ===============================
     // ДАННЫЕ МЕНЮ
     // ===============================
@@ -99,23 +106,33 @@
     let allMenuShown = false;
 
     function renderTabs() {
-      const tabBtns = document.querySelectorAll('.tab-btn');
-      tabBtns.forEach(btn => {
+      document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.cat === currentCat);
       });
     }
 
+    function itemKey(item) {
+      return `${item.name}|${item.price}|${item.unit}`;
+    }
+
+    function findItemByKey(key) {
+      for (const cat of MENU)
+        for (const it of cat.items)
+          if (itemKey(it) === key)
+            return it;
+    }
+
     function renderProducts() {
       const sectionTitle = document.getElementById('cat-title');
-      sectionTitle.textContent = `Меню ${currentCat.charAt(0).toUpperCase() + currentCat.slice(1).toLowerCase()}`;
+      sectionTitle.textContent = `Меню ${currentCat}`;
 
       const list = document.getElementById('products-list');
       list.innerHTML = '';
-      const cat = MENU.find(cat => cat.category === currentCat);
-      if (!cat) return;
+      const cat = MENU.find(c => c.category === currentCat);
 
-      const showItems = allMenuShown ? cat.items : cat.items.slice(0, SHORT_LIMIT);
-      showItems.forEach((item) => {
+      const items = allMenuShown ? cat.items : cat.items.slice(0, SHORT_LIMIT);
+
+      items.forEach(item => {
         const card = document.createElement('div');
         card.className = 'product-card';
         card.innerHTML = `
@@ -124,86 +141,70 @@
             <div class="product-meta">${item.price} руб/${item.unit}</div>
           </div>
           <div class="product-amount">
-            <button class="btn minus" ${!cartKeyHas(item) ? 'disabled' : ''}>-</button>
+            <button class="btn minus" ${!cart[itemKey(item)] ? 'disabled' : ''}>-</button>
             <span class="amount">${cart[itemKey(item)] || 0}</span>
             <button class="btn plus">+</button>
           </div>
         `;
+
         const minus = card.querySelector('.minus');
         const plus = card.querySelector('.plus');
+
         plus.onclick = () => {
           cart[itemKey(item)] = (cart[itemKey(item)] || 0) + 1;
-          renderProducts();
-          updateCartBtn();
+          renderProducts(); updateCartBtn();
         };
         minus.onclick = () => {
           if (cart[itemKey(item)]) {
-            cart[itemKey(item)] -= 1;
+            cart[itemKey(item)]--;
             if (cart[itemKey(item)] <= 0) delete cart[itemKey(item)];
-            renderProducts();
-            updateCartBtn();
+            renderProducts(); updateCartBtn();
           }
         };
+
         list.appendChild(card);
       });
 
-      const btnShowAll = document.getElementById('show-all-btn');
-      if (cat.items.length > SHORT_LIMIT && !allMenuShown) {
-        btnShowAll.style.display = 'block';
-      } else {
-        btnShowAll.style.display = 'none';
-      }
+      document.getElementById('show-all-btn').style.display =
+        (!allMenuShown && cat.items.length > SHORT_LIMIT) ? 'block' : 'none';
     }
-    function cartKeyHas(item) {
-      return cart[itemKey(item)] && cart[itemKey(item)] > 0;
-    }
-    function itemKey(item) {
-      return `${item.name}|${item.price}|${item.unit}`;
-    }
-    function findItemByKey(key) {
-      for (const cat of MENU)
-        for (const it of cat.items)
-          if (itemKey(it) === key)
-            return it;
-      return null;
-    }
-    document.getElementById('show-all-btn').onclick = function(){
+
+    document.getElementById('show-all-btn').onclick = () => {
       allMenuShown = true;
-      renderProducts();
-      renderTabs();
+      renderProducts(); renderTabs();
     };
 
     document.querySelectorAll('.tab-btn').forEach(btn => {
       btn.onclick = () => {
         currentCat = btn.dataset.cat;
         allMenuShown = false;
-        renderTabs();
-        renderProducts();
-        const productsList = document.getElementById('products-list');
-        productsList.classList.add('fade');
-        setTimeout(() => productsList.classList.remove('fade'), 350);
+        renderTabs(); renderProducts();
       };
     });
 
     function updateCartBtn() {
-      let total = Object.values(cart).reduce((s, n) => s + n, 0);
+      let total = Object.values(cart).reduce((a, b) => a + b, 0);
       document.getElementById('cart-count').textContent = `(${total})`;
       document.getElementById('cart-btn').disabled = total === 0;
     }
 
-    document.getElementById('cart-btn').onclick = function(){
+    // =============== КОРЗИНА ===============
+    document.getElementById('cart-btn').onclick = () => {
       openCart();
     };
-    function openCart(){
+
+    function openCart() {
       const modal = document.getElementById('cart-modal');
       const cartItems = document.getElementById('cart-items');
       const cartTotalSum = document.getElementById('cart-total-sum');
       cartItems.innerHTML = '';
       let sum = 0;
-      Object.entries(cart).forEach(([key, amount])=>{
+
+      Object.entries(cart).forEach(([key, amount]) => {
         const item = findItemByKey(key);
         let total = item.price * amount;
         sum += total;
+
         const row = document.createElement('div');
         row.className = 'cart-row';
         row.innerHTML = `
@@ -213,51 +214,73 @@
             <button class="btn minus">-</button>
             <span class="amount">${amount}</span>
             <button class="btn plus">+</button>
-            <button class="btn remove" title="Удалить">&#10005;</button>
+            <button class="btn remove">&#10005;</button>
           </div>
-          <span class="cart-item-sum">${(total).toFixed(2)} руб</span>
+          <span class="cart-item-sum">${total.toFixed(2)} руб</span>
         `;
-        row.querySelector('.plus').onclick = ()=>{
-          cart[key] = (cart[key] || 0) + 1;
-          openCart();
-          renderProducts();
-          updateCartBtn();
+
+        row.querySelector('.plus').onclick = () => {
+          cart[key]++; openCart(); renderProducts(); updateCartBtn();
         };
-        row.querySelector('.minus').onclick = ()=>{
-          cart[key] = cart[key] - 1;
-          if (cart[key]<=0) delete cart[key];
-          openCart();
-          renderProducts();
-          updateCartBtn();
+        row.querySelector('.minus').onclick = () => {
+          cart[key]--; if (cart[key] <= 0) delete cart[key];
+          openCart(); renderProducts(); updateCartBtn();
         };
-        row.querySelector('.remove').onclick = ()=>{
-          delete cart[key];
-          openCart();
-          renderProducts();
-          updateCartBtn();
+        row.querySelector('.remove').onclick = () => {
+          delete cart[key]; openCart(); renderProducts(); updateCartBtn();
         };
+
         cartItems.appendChild(row);
       });
+
       cartTotalSum.textContent = `${sum.toFixed(2)} руб`;
       modal.style.display = 'flex';
     }
-    document.getElementById('close-cart-btn').onclick = ()=>{
+
+    document.getElementById('close-cart-btn').onclick = () => {
       document.getElementById('cart-modal').style.display = 'none';
     };
-    document.getElementById('confirm-btn').onclick = ()=>{
+
+    // =============== ОТПРАВКА ЗАКАЗА В TELEGRAM-БОТ ===============
+    document.getElementById('confirm-btn').onclick = () => {
+      let items = [];
+
+      Object.entries(cart).forEach(([key, amount]) => {
+        const item = findItemByKey(key);
+        if (item && amount > 0) {
+          items.push({
+            name: item.name,
+            price: item.price,
+            unit: item.unit,
+            count: amount
+          });
+        }
+      });
+
+      let total = items.reduce((sum, it) => sum + it.price * it.count, 0);
+
+      const order = {
+        items: items,
+        total: total
+      };
+
+      // === ВАЖНО ===
+      // Отправка данных в Telegram-бот
+      tg.sendData(JSON.stringify(order));
+
+      // Закрыть корзину и показать модал "Спасибо"
       document.getElementById('cart-modal').style.display = 'none';
       document.getElementById('thanks-modal').style.display = 'flex';
+
       cart = {};
       renderProducts();
       updateCartBtn();
     };
 
     window.onload = () => {
-      renderTabs();
-      renderProducts();
-      updateCartBtn();
-    }
-    window.onresize = renderTabs;
+      renderTabs(); renderProducts(); updateCartBtn();
+    };
   </script>
+
 </body>
 </html>
