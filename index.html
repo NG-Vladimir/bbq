@@ -176,7 +176,7 @@ document.getElementById('cart-btn').onclick=()=>{ renderCartItems(); document.ge
 document.querySelectorAll('.close-cart-btn').forEach(btn=>{ btn.onclick=()=>{ document.getElementById('cart-modal').style.display='none'; document.getElementById('thanks-modal').style.display='none'; }; });
 
 // ==========================
-// Подтверждение заказа в Telegram
+// Подтверждение заказа в Telegram с никнеймом
 // ==========================
 document.getElementById('confirm-btn').onclick=()=>{
   const items = [];
@@ -184,9 +184,19 @@ document.getElementById('confirm-btn').onclick=()=>{
     const item = findItemByKey(key);
     if(item && amount>0) items.push({name:item.name, price:item.price, unit:item.unit, count:amount});
   });
+  if(items.length===0) return;
+
   const total = items.reduce((s,it)=>s+it.price*it.count,0);
-  const order = {items, total};
-  
+
+  const user = tg.initDataUnsafe.user || {};
+  const userName = user.username ? `@${user.username}` : `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Пользователь';
+
+  const order = {
+    items,
+    total,
+    user: userName
+  };
+
   tg.sendData(JSON.stringify(order));
 
   cart = {};
