@@ -11,7 +11,7 @@ const PORT = 3000;
 // ----------------------------
 const BOT_TOKEN = '8550785215:AAEq8L_OtNbRC55EMmYecbYr2Cx-etWx81o';
 const CHAT_ID = '-1003125114407';
-const MINIAPP_URL = 'https://bbq-kappa.vercel.app/  ';
+const MINIAPP_URL = 'https://bbq-m6z9oco3y-ng-vladimirs-projects.vercel.app/';
 
 // ----------------------------
 // Глобальный счётчик заказов
