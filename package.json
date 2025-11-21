@@ -11,6 +11,17 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "body-parser": "^2.2.0",
+    "express": "^5.1.0",
+    "node-fetch": "^3.3.2",
     "telegraf": "^4.16.3"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NG-Vladimir/bbq.git"
+  },
+  "bugs": {
+    "url": "https://github.com/NG-Vladimir/bbq/issues"
+  },
+  "homepage": "https://github.com/NG-Vladimir/bbq#readme"
 }
